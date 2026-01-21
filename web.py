@@ -1,44 +1,42 @@
 import os
+import sys
+import argparse
+
+# ---------------- CONFIG ----------------
+parser = argparse.ArgumentParser()
+parser.add_argument("--colab", action="store_true", help="Usar Google Drive para cache persistente")
+parser.add_argument("--cache_dir", type=str, default=None, help="Ruta personalizada para cache")
+parser.add_argument("--workdir", type=str, default=None, help="Ruta temporal de trabajo")
+args, _ = parser.parse_known_args()
+# 🔥 CLAVE: limpiar argv para scripts hijos
+sys.argv = sys.argv[:1]
+
+WORKDIR = args.workdir or "gradio_tmp"
+CACHE_DIR = args.cache_dir or "lipsync/cache"
+VOCES_DIR = os.path.join(os.path.dirname(__file__), "voces")
+
+if args.colab:
+    BASE_CACHE = "/content/drive/MyDrive/LipSyncLite"
+    CACHE_DIR = os.path.join(BASE_CACHE, "cache")
+    WORKDIR = os.path.join(BASE_CACHE, "tmp")
+    VOCES_DIR = os.path.join(BASE_CACHE, "voces")
+
+print("📂 WORKDIR =", WORKDIR)
+print("📦 CACHE_DIR =", CACHE_DIR)
+print("📦 VOCES_DIR =", VOCES_DIR)
+
+os.makedirs(WORKDIR, exist_ok=True)
+os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(VOCES_DIR, exist_ok=True)
+
 import shutil
-import hashlib
 import threading
 import atexit
 import gradio as gr 
-
 from lipsync import LipSync
 # de las funciones locales importamos lo necesario
 from f5_socket_client import generar_audio_f5_socket
 from f5_tts.socket_server import F5TTSServer
-
-# ---------------- CONFIG ----------------
-WORKDIR = "gradio_tmp"
-
-def is_colab():
-    try:
-        import google.colab
-        return True
-    except:
-        return False
-
-if is_colab():
-    from google.colab import drive
-    drive.mount("/content/drive")
-
-    BASE_CACHE = "/content/drive/MyDrive/LipSyncLite"
-    CACHE_DIR = os.path.join(BASE_CACHE, "cache")
-    WORKDIR = os.path.join(BASE_CACHE, "tmp")
-
-    print("📦 Cache persistente activado en Google Drive")
-else:
-    CACHE_DIR = "lipsync/cache"
-    WORKDIR = "gradio_tmp"
-
-os.makedirs(CACHE_DIR, exist_ok=True)
-os.makedirs(WORKDIR, exist_ok=True)
-
-VOCES_DIR = os.path.join(os.path.dirname(__file__), "voces")
-if not os.path.exists(VOCES_DIR):
-    os.makedirs(VOCES_DIR)
 
 # ---------------- SOCKET SERVER ----------------
 f5_socket_server = None
