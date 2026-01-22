@@ -3,7 +3,7 @@ import shutil
 import hashlib
 import threading
 import atexit
-import gradio as gr
+import gradio as gr 
 
 from lipsync import LipSync
 # de las funciones locales importamos lo necesario
@@ -12,9 +12,29 @@ from f5_tts.socket_server import F5TTSServer
 
 # ---------------- CONFIG ----------------
 WORKDIR = "gradio_tmp"
-CACHE_DIR = "lipsync/cache"
-os.makedirs(WORKDIR, exist_ok=True)
+
+def is_colab():
+    try:
+        import google.colab
+        return True
+    except:
+        return False
+
+if is_colab():
+    from google.colab import drive
+    drive.mount("/content/drive")
+
+    BASE_CACHE = "/content/drive/MyDrive/LipSyncLite"
+    CACHE_DIR = os.path.join(BASE_CACHE, "cache")
+    WORKDIR = os.path.join(BASE_CACHE, "tmp")
+
+    print("📦 Cache persistente activado en Google Drive")
+else:
+    CACHE_DIR = "lipsync/cache"
+    WORKDIR = "gradio_tmp"
+
 os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(WORKDIR, exist_ok=True)
 
 VOCES_DIR = os.path.join(os.path.dirname(__file__), "voces")
 if not os.path.exists(VOCES_DIR):
