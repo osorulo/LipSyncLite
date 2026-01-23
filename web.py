@@ -8,7 +8,6 @@ parser.add_argument("--colab", action="store_true", help="Usar Google Drive para
 parser.add_argument("--cache_dir", type=str, default=None, help="Ruta personalizada para cache")
 parser.add_argument("--workdir", type=str, default=None, help="Ruta temporal de trabajo")
 args, _ = parser.parse_known_args()
-# 🔥 CLAVE: limpiar argv para scripts hijos
 sys.argv = sys.argv[:1]
 
 WORKDIR = args.workdir or "gradio_tmp"
@@ -34,7 +33,7 @@ import threading
 import atexit
 import gradio as gr 
 from lipsync import LipSync
-# de las funciones locales importamos lo necesario
+
 from f5_socket_client import generar_audio_f5_socket
 from f5_tts.socket_server import F5TTSServer
 
@@ -100,7 +99,7 @@ def generar_audio_ui(texto, ref_audio, speed):
 import uuid
 
 def procesar(video_file, audio_file, mejorar, modelo, weight,
-             n_slider, a_slider, mejorarES_chk, calidez, progress=gr.Progress()):
+             n_slider, a_slider, mejorarES_chk, progress=gr.Progress()):
     if video_file is None or audio_file is None:
         raise gr.Error("Se requiere video y audio.")
 
@@ -119,8 +118,7 @@ def procesar(video_file, audio_file, mejorar, modelo, weight,
     shutil.copy(audio_file, audio_in)
 
     lip = crear_lipsync(modelo, weight)
-    lip.sync(video_in, audio_in, video_out, mejorar, a_slider, mejorarES_chk, 
-             calidez=calidez, progress=progress) # <-- Pasar calidez aquí
+    lip.sync(video_in, audio_in, video_out, mejorar, a_slider, mejorarES_chk, progress=progress) 
     return video_out
 
 # ---------------- UI ----------------
@@ -155,12 +153,10 @@ with gr.Blocks(title="LipSync Pro AMD", theme=gr.themes.Soft()) as demo:
         with gr.Column():
             weight_slider = gr.Slider(0, 1, value=0.5, label="Fuerza GFPGAN")
             a_slider = gr.Slider(0, 1, value=0.15, label="Mezcla (Blend con original)")
-            calidez_slider = gr.Slider(0, 0.5, value=0.1, step=0.01, label="Eliminar Azul (Calidez)")
 
     btn_procesar = gr.Button("🚀 EMPEZAR LIP-SYNC", variant="primary")
     video_output = gr.Video(label="✅ Resultado Final")
 
-    # Eventos
     btn_gen_audio.click(
         generar_audio_ui,
         inputs=[tts_text, ref_audio_input, speed_slider],
@@ -172,7 +168,7 @@ with gr.Blocks(title="LipSync Pro AMD", theme=gr.themes.Soft()) as demo:
         inputs=[
             video_input, audio_upload, mejorar_chk, modelo_lipsync,
             weight_slider, gr.Number(value=1, visible=False),
-            a_slider, mejorarES_chk, calidez_slider # <-- Añadido aquí
+            a_slider, mejorarES_chk
         ],
         outputs=video_output
     )
